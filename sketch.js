@@ -1,6 +1,6 @@
 let particles = [];
-const numParticles = 2;
-const connectionThreshold = 5;
+const numParticles = 90;
+const connectionThreshold = 150;
 let targetX, targetY;
 
 function setup() {
