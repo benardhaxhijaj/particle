@@ -2,22 +2,44 @@ let particles = [];
 const numParticles = 100;
 const connectionThreshold = 150;
 let targetX, targetY;
+let resetTimer = 0;
+const resetInterval = 180000; // 3 minutes in milliseconds
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   background(30, 30, 40);
-  for (let i = 0; i < numParticles; i++) {
-    particles.push(new Particle(random(width), random(height)));
-  }
+  initParticles();
   setRandomTarget();
 }
 
 function draw() {
   background(30, 30, 40);
 
+  // Update and display particles
   for (let i = 0; i < particles.length; i++) {
     particles[i].update(targetX, targetY);
     particles[i].display();
+  }
+
+  // Draw connections between particles
+  drawConnections();
+
+  // Check if it's time to reset the particle system
+  if (millis() - resetTimer > resetInterval) {
+    resetParticles();
+    resetTimer = millis(); // Reset the timer
+  }
+}
+
+function initParticles() {
+  particles = []; // Clear the existing particles array
+  for (let i = 0; i < numParticles; i++) {
+    particles.push(new Particle(random(width), random(height)));
+  }
+}
+
+function drawConnections() {
+  for (let i = 0; i < particles.length; i++) {
     for (let j = i + 1; j < particles.length; j++) {
       let d = dist(
         particles[i].x,
@@ -34,6 +56,15 @@ function draw() {
   }
 }
 
+function resetParticles() {
+  // Fade out particles
+  for (let particle of particles) {
+    particle.fadeOut();
+  }
+  // Reinitialize particles after a short delay
+  setTimeout(initParticles, 2000); // 2 seconds delay
+}
+
 function setRandomTarget() {
   targetX = random(width);
   targetY = random(height);
@@ -44,18 +75,17 @@ class Particle {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    // Reduced velocity for slower movement
     this.vx = random(-0.01, 0.01);
     this.vy = random(-0.01, 0.01);
     this.radius = 8;
     this.color = color(255, 255, 255);
+    this.alpha = 255; // Add an alpha value for fading
   }
 
   update(targetX, targetY) {
     let dx = targetX - this.x;
     let dy = targetY - this.y;
     let angle = atan2(dy, dx);
-    // Reduced force for more gentle movement
     let force = 0.001;
     this.vx += cos(angle) * force;
     this.vy += sin(angle) * force;
@@ -73,9 +103,19 @@ class Particle {
     }
   }
 
+  fadeOut() {
+    this.alpha -= 5; // Reduce alpha to fade out
+    this.alpha = max(this.alpha, 0); // Ensure alpha doesn't go negative
+  }
+
   display() {
     noStroke();
-    fill(this.color);
+    fill(
+      this.color.levels[0],
+      this.color.levels[1],
+      this.color.levels[2],
+      this.alpha
+    );
     ellipse(this.x, this.y, this.radius * 2);
   }
 }
